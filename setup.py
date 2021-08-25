@@ -9,7 +9,7 @@ setup(
     packages=["beefweb_mpris"],
     entry_points='''
     [console_scripts]
-    foobar2000-mpris=beefweb_mpris.main:main
+    beefweb_mpris=beefweb_mpris.main:main
     ''',
     install_requires=[
         'mpris_server',
