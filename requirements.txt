@@ -1,0 +1,4 @@
+mpris_server
+pyfoobeef
+pyyaml
+pygobject
