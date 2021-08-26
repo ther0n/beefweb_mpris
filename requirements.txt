@@ -2,3 +2,5 @@ mpris_server
 pyfoobeef
 pyyaml
 pygobject
+pygobject-stubs
+requests

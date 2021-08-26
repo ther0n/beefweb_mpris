@@ -1,22 +1,17 @@
 import asyncio
 import threading
 import os
+import shutil
+from typing import Dict
+
 import yaml
 from gi.repository import GLib
 from subprocess import Popen
 from mpris_server.server import Server
 
 from beefweb_mpris.beefweb import Beefweb
-from beefweb_mpris.adapter import BeefwebAdapter, BeefwebEventHandler
-
-
-async def start(event_handler, beefweb):
-    await beefweb.register_event_handler(event_handler)
-
-
-def start_event_loop(loop: asyncio.AbstractEventLoop) -> None:
-    asyncio.set_event_loop(loop)
-    loop.run_forever()
+from beefweb_mpris.adapter import BeefwebAdapter
+from beefweb_mpris.handler import register_event_handler
 
 
 def main():
@@ -28,7 +23,6 @@ def main():
             'host': 'localhost',
             'port': 8880,
             'foobar2000-command': 'foobar2000',
-            'timeout': 30.0,
             'username': 'user',
             'password': 'password'
         }
@@ -42,21 +36,17 @@ def main():
             print(e)
 
     foobar2000 = Popen([config['foobar2000-command']])
-
     beefweb = Beefweb(config['host'], config['port'], config['username'], config['password'])
     adapter = BeefwebAdapter(beefweb)
     mpris = Server('beefweb', adapter=adapter)
-    event_handler = BeefwebEventHandler(root=mpris.root, player=mpris.player)
-
-    event_loop = asyncio.new_event_loop()
-    event_thread = threading.Thread(target=start_event_loop, args=(event_loop,), daemon=True)
-    event_thread.start()
-    event_task = asyncio.run_coroutine_threadsafe(start(event_handler, beefweb), event_loop)
 
     mpris_thread = threading.Thread(target=mpris.loop, daemon=True)
     mpris_thread.start()
 
+    register_event_handler(beefweb, mpris, adapter)
+
     foobar2000.wait()
+    shutil.rmtree(f'{GLib.get_user_cache_dir()}/beefweb_mpris')
 
 
 if __name__ == '__main__':

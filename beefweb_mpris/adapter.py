@@ -1,13 +1,13 @@
+import urllib.request
 from mimetypes import guess_type
 from typing import Optional
-
+from math import log
 from mpris_server import MetadataObj, ValidMetadata
 from mpris_server.adapters import MprisAdapter
 from mpris_server.base import Microseconds, PlayState, DbusObj, DEFAULT_RATE, RateDecimal, VolumeDecimal, Track, \
     DEFAULT_TRACK_ID
-from mpris_server.events import EventAdapter
 from mpris_server.mpris.compat import get_track_id
-from pyfoobeef.models import PlayerState
+from gi.repository import GLib
 
 from beefweb_mpris.beefweb import Beefweb
 
@@ -21,11 +21,11 @@ class BeefwebAdapter(MprisAdapter):
         try:
             active_item = self.beefweb.active_item
             columns = active_item.columns
+            self.beefweb.download_art()
             return MetadataObj(
                 track_id=get_track_id(active_item.columns.title),
                 length=int(self.beefweb.active_item.duration * 1000000),
-                art_url=f'http://{self.beefweb.server}:{self.beefweb.port}/api'
-                        f'/artwork/{active_item.playlist_id}/{active_item.index}',
+                art_url=f'file://{GLib.get_user_cache_dir()}/beefweb_mpris/{columns.album}',
                 title=columns.title,
                 artists=[columns.artists],
                 album=columns.album,
@@ -33,7 +33,7 @@ class BeefwebAdapter(MprisAdapter):
                 disc_no=int(columns.disc_no),
                 track_no=int(columns.track_no)
             )
-        except AttributeError:
+        except AttributeError as e:
             return MetadataObj(
                 track_id=DEFAULT_TRACK_ID
             )
@@ -85,7 +85,7 @@ class BeefwebAdapter(MprisAdapter):
 
     def open_uri(self, uri: str):
         mimetype, _ = guess_type(uri)
-        self.beefweb.client.play
+        self.beefweb.client.play()
 
     def is_repeating(self) -> bool:
         try:
@@ -100,10 +100,18 @@ class BeefwebAdapter(MprisAdapter):
         return True
 
     def set_repeating(self, val: bool):
-        self.beefweb.client.set_player_state(playback_mode=2)
+        if self.beefweb.state.playback_mode.number == 2:
+            self.beefweb.client.set_player_state(playback_mode=0)
+        else:
+            self.beefweb.client.set_player_state(playback_mode=2)
 
     def set_loop_status(self, val: str):
-        pass
+        if val == "None":
+            self.beefweb.client.set_player_state(playback_mode=0)
+        elif val == "Track":
+            self.beefweb.client.set_player_state(playback_mode=2)
+        elif val == "Playlist":
+            self.beefweb.client.set_player_state(playback_mode=1)
 
     def get_rate(self) -> RateDecimal:
         return DEFAULT_RATE
@@ -133,20 +141,27 @@ class BeefwebAdapter(MprisAdapter):
             return False
 
     def set_shuffle(self, val: bool):
-        self.beefweb.client.set_player_state(playback_mode=4)
+        if self.beefweb.state.playback_mode.number == 4:
+            self.beefweb.client.set_player_state(playback_mode=0)
+        else:
+            self.beefweb.client.set_player_state(playback_mode=4)
 
     def get_art_url(self, track: int) -> str:
-        return f'http://{self.beefweb.server}:{self.beefweb.port}' \
-               f'/artwork/{self.beefweb.active_item.playlist_id}/{self.beefweb.active_item.index}'
+        self.beefweb.download_art()
+        return f'file://{GLib.get_user_cache_dir()}/beefweb_mpris/{self.beefweb.active_item.columns.album}'
 
     def get_volume(self) -> VolumeDecimal:
+        print("returning volume: ", self.beefweb.state.volume.value)
         try:
             return self.beefweb.state.volume.value + 100.0
         except AttributeError:
             return 100
 
     def set_volume(self, val: VolumeDecimal):
-        return self.beefweb.client.set_player_state(volume=VolumeDecimal-100.0)
+        # I don't know what im doing but it works kinda
+        new_vol = 0 - (100 ** (1 - val))
+        print(new_vol)
+        return self.beefweb.client.set_player_state(volume=new_vol)
 
     def is_mute(self) -> bool:
         try:
@@ -183,9 +198,3 @@ class BeefwebAdapter(MprisAdapter):
 
     def get_next_track(self) -> Track:
         pass
-
-
-class BeefwebEventHandler(EventAdapter):
-
-    def on_event(self, state: PlayerState):
-        self.emit_all()

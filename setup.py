@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="beefweb_mpris",
-    version="1.0.0",
+    version="1.0.1",
     author="Theron Tjapkes",
     description="Adds MPRIS support to foobar2000 through beefweb",
     url="https://github.com/ther0n/beefweb_mpris",
@@ -15,6 +15,7 @@ setup(
         'mpris_server',
         'pyfoobeef',
         'pyyaml',
-        'pygobject'
+        'pygobject',
+        'requests'
     ]
 )
