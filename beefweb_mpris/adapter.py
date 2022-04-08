@@ -30,8 +30,8 @@ class BeefwebAdapter(MprisAdapter):
                 artists=[columns.artists],
                 album=columns.album,
                 album_artists=[columns.album_artist],
-                disc_no=int(columns.disc_no),
-                track_no=int(columns.track_no)
+                disc_no=int(columns.disc_no) if columns.disc_no.isdigit() else 1,
+                track_no=int(columns.track_no) if columns.track_no.isdigit() else 1
             )
         except AttributeError as e:
             return MetadataObj(
@@ -151,8 +151,8 @@ class BeefwebAdapter(MprisAdapter):
         return f'file://{GLib.get_user_cache_dir()}/beefweb_mpris/{self.beefweb.active_item.columns.album}'
 
     def get_volume(self) -> VolumeDecimal:
-        print("returning volume: ", self.beefweb.state.volume.value)
         try:
+            print("returning volume: ", self.beefweb.state.volume.value)
             return self.beefweb.state.volume.value + 100.0
         except AttributeError:
             return 100
