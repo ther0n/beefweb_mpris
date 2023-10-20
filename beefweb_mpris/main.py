@@ -46,7 +46,11 @@ def main():
     register_event_handler(beefweb, mpris, adapter)
 
     foobar2000.wait()
-    shutil.rmtree(f'{GLib.get_user_cache_dir()}/beefweb_mpris')
+    
+    cache_dir = GLib.get_user_cache_dir()
+    if not os.path.exists(cache_dir+'/beefweb_mpris'):
+        os.makedirs(cache_dir+'/beefweb_mpris')
+    shutil.rmtree(cache_dir+'/beefweb_mpris')
 
 
 if __name__ == '__main__':
