@@ -4,7 +4,7 @@ from typing import Optional
 from math import log
 from mpris_server import MetadataObj, ValidMetadata
 from mpris_server.adapters import MprisAdapter
-from mpris_server.base import Microseconds, PlayState, DbusObj, DEFAULT_RATE, RateDecimal, VolumeDecimal, Track, \
+from mpris_server.base import Microseconds, PlayState, DbusObj, DEFAULT_RATE, Rate, Volume, Track, \
     DEFAULT_TRACK_ID
 from mpris_server.mpris.compat import get_track_id
 from gi.repository import GLib
@@ -113,22 +113,22 @@ class BeefwebAdapter(MprisAdapter):
         elif val == "Playlist":
             self.beefweb.client.set_player_state(playback_mode=1)
 
-    def get_rate(self) -> RateDecimal:
+    def get_rate(self) -> Rate:
         return DEFAULT_RATE
 
-    def set_rate(self, val: RateDecimal):
+    def set_rate(self, val: Rate):
         pass
 
-    def set_minimum_rate(self, val: RateDecimal):
+    def set_minimum_rate(self, val: Rate):
         pass
 
-    def set_maximum_rate(self, val: RateDecimal):
+    def set_maximum_rate(self, val: Rate):
         pass
 
-    def get_minimum_rate(self) -> RateDecimal:
+    def get_minimum_rate(self) -> Rate:
         pass
 
-    def get_maximum_rate(self) -> RateDecimal:
+    def get_maximum_rate(self) -> Rate:
         pass
 
     def get_shuffle(self) -> bool:
@@ -150,14 +150,14 @@ class BeefwebAdapter(MprisAdapter):
         self.beefweb.download_art()
         return f'file://{GLib.get_user_cache_dir()}/beefweb_mpris/{self.beefweb.active_item.columns.album}'
 
-    def get_volume(self) -> VolumeDecimal:
+    def get_volume(self) -> Volume:
         try:
             print("returning volume: ", self.beefweb.state.volume.value)
             return self.beefweb.state.volume.value + 100.0
         except AttributeError:
             return 100
 
-    def set_volume(self, val: VolumeDecimal):
+    def set_volume(self, val: Volume):
         # I don't know what im doing but it works kinda
         new_vol = 0 - (100 ** (1 - val))
         print(new_vol)
