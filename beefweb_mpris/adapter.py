@@ -5,7 +5,7 @@ from math import log
 from mpris_server import MetadataObj, ValidMetadata
 from mpris_server.adapters import MprisAdapter
 from mpris_server.base import Microseconds, PlayState, DbusObj, DEFAULT_RATE, RateDecimal, VolumeDecimal, Track, \
-    DEFAULT_TRACK_ID
+    DEFAULT_TRACK_ID, Paths
 from mpris_server.mpris.compat import get_track_id
 from gi.repository import GLib
 
@@ -13,9 +13,13 @@ from beefweb_mpris.beefweb import Beefweb
 
 
 class BeefwebAdapter(MprisAdapter):
-    def __init__(self, wrapper: Beefweb):
+    def __init__(self, wrapper: Beefweb, desktop_entry: Paths):
         self.beefweb = wrapper
+        self.desktop_entry = desktop_entry
         super().__init__()
+
+    def get_desktop_entry(self) -> Paths:
+        return self.desktop_entry
 
     def metadata(self) -> ValidMetadata:
         try:

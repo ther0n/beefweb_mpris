@@ -23,6 +23,7 @@ def main():
             'host': 'localhost',
             'port': 8880,
             'foobar2000-command': 'foobar2000',
+            'desktop-entry': 'foobar2000',
             'username': 'user',
             'password': 'password'
         }
@@ -37,7 +38,7 @@ def main():
 
     foobar2000 = Popen([config['foobar2000-command']])
     beefweb = Beefweb(config['host'], config['port'], config['username'], config['password'])
-    adapter = BeefwebAdapter(beefweb)
+    adapter = BeefwebAdapter(beefweb, config['desktop-entry'])
     mpris = Server('beefweb', adapter=adapter)
 
     mpris_thread = threading.Thread(target=mpris.loop, daemon=True)
