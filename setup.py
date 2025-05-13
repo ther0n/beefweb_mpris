@@ -6,7 +6,7 @@ with open('requirements.txt') as f:
 
 setup(
     name="beefweb_mpris",
-    version="1.0.3",
+    version="1.0.4",
     author="Theron Tjapkes",
     description="Adds MPRIS support to foobar2000 through beefweb",
     url="https://github.com/ther0n/beefweb_mpris",
