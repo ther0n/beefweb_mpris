@@ -11,20 +11,21 @@ Note: These are only tested on Fedora 40, but can be adapted to other distros
 3. Install the beefweb plugin in foobar2000
 4. Install (potential) dependencies
     - `sudo dnf -y groupinstall "Development Tools"`
-    - `sudo dnf install cairo-devel pkg-config python3-pip python3-devel cmake gobject-introspection-devel cairo-gobject-devel`
+    - `sudo dnf install pipx cairo-devel pkg-config python3-pip python3-devel cmake gobject-introspection-devel cairo-gobject-devel`
     - Some of these may not be needed, but all were needed for development
-5.  Install `beefweb_mpris`: `pip install --user git+https://github.com/ther0n/beefweb_mpris.git`
-6. Create a script to launch foobar2000 somewhere in your $PATH, make sure it's executable with `chmod +x`
+5.  Install `beefweb_mpris`: `pipx install git+https://github.com/ther0n/beefweb_mpris.git`
+    - `pipx` can also be installed with `pip install --user pipx`, installation using `pipx` is highly recommended unless you know what you're doing :)
+7. Create a script to launch foobar2000 somewhere in your $PATH, make sure it's executable with `chmod +x`
    - For example `~/.local/bin/foobar2000`:
    ```bash
     #!/bin/bash
     
     env WINEPREFIX="/home/theron/.wine" wine "/home/theron/.wine/drive_c/Program Files/foobar2000/foobar2000.exe"
     ```
-7. Edit `$CONFIG/beefweb_mpris/config.yaml` to match your settings for beefweb in foobar2000
+8. Edit `$CONFIG/beefweb_mpris/config.yaml` to match your settings for beefweb in foobar2000
 
    -`foobar2000-command` should be set to the foobar2000 launch script you just created (or the [one included with the AUR package](https://aur.archlinux.org/cgit/aur.git/tree/foobar2000.sh?h=foobar2000))
-8. Edit or create a `.desktop` file to launch beefweb_mpris
+9. Edit or create a `.desktop` file to launch beefweb_mpris
    - For example my `~/.local/share/applications/wine/Programs/foobar2000.desktop` file:
    ```
     [Desktop Entry]
