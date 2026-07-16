@@ -139,19 +139,15 @@ class BeefwebAdapter(MprisAdapter):
         pass
 
     def get_shuffle(self) -> bool:
-        try:
-            if self.beefweb.state.playback_mode.number == 4:
-                return True
-            else:
-                return False
-        except AttributeError:
-            return False
+        # 3 = random, 4/5/6 = shuffle tracks/albums/folders
+        return self._playback_mode() in (3, 4, 5, 6)
 
     def set_shuffle(self, val: bool):
-        if self.beefweb.state.playback_mode.number == 4:
-            self.beefweb.client.set_player_state(playback_mode=0)
-        else:
+        mode = self._playback_mode()
+        if val and mode not in (3, 4, 5, 6):
             self.beefweb.client.set_player_state(playback_mode=4)
+        elif not val and mode in (3, 4, 5, 6):
+            self.beefweb.client.set_player_state(playback_mode=0)
 
     def get_art_url(self, track: int) -> str:
         self.beefweb.download_art()
