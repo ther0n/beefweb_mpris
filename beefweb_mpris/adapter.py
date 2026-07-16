@@ -155,16 +155,21 @@ class BeefwebAdapter(MprisAdapter):
         return f'file://{GLib.get_user_cache_dir()}/beefweb_mpris/{self.beefweb.active_item.columns.album}'
 
     def get_volume(self) -> VolumeDecimal:
+        # MPRIS volume is 0.0-1.0; foobar2000 reports dB (-100.0 to 0.0).
+        # Inverse of set_volume's curve, so scroll steps round-trip.
         try:
-            print("returning volume: ", self.beefweb.state.volume.value)
-            return self.beefweb.state.volume.value + 100.0
+            db = float(self.beefweb.state.volume.value)
         except AttributeError:
-            return 100
+            return 1.0
+        if db >= -1.0:
+            return 1.0
+        if db <= -100.0:
+            return 0.0
+        return 1.0 - log(-db) / log(100)
 
     def set_volume(self, val: VolumeDecimal):
-        # I don't know what im doing but it works kinda
+        val = min(max(float(val), 0.0), 1.0)
         new_vol = 0 - (100 ** (1 - val))
-        print(new_vol)
         return self.beefweb.client.set_player_state(volume=new_vol)
 
     def is_mute(self) -> bool:
