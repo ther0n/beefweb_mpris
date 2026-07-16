@@ -91,23 +91,26 @@ class BeefwebAdapter(MprisAdapter):
         mimetype, _ = guess_type(uri)
         self.beefweb.client.play()
 
-    def is_repeating(self) -> bool:
+    def _playback_mode(self) -> int:
         try:
-            if self.beefweb.state.playback_mode.number == 2:
-                return True
-            else:
-                return False
+            return self.beefweb.state.playback_mode.number
         except AttributeError:
-            return False
+            return 0
+
+    def is_repeating(self) -> bool:
+        # 1 = repeat playlist, 2 = repeat track
+        return self._playback_mode() in (1, 2)
 
     def is_playlist(self) -> bool:
-        return True
+        # LoopStatus is Playlist when repeating and this is True, else Track.
+        return self._playback_mode() == 1
 
     def set_repeating(self, val: bool):
-        if self.beefweb.state.playback_mode.number == 2:
+        mode = self._playback_mode()
+        if val and mode not in (1, 2):
+            self.beefweb.client.set_player_state(playback_mode=1)
+        elif not val and mode in (1, 2):
             self.beefweb.client.set_player_state(playback_mode=0)
-        else:
-            self.beefweb.client.set_player_state(playback_mode=2)
 
     def set_loop_status(self, val: str):
         if val == "None":
@@ -136,35 +139,36 @@ class BeefwebAdapter(MprisAdapter):
         pass
 
     def get_shuffle(self) -> bool:
-        try:
-            if self.beefweb.state.playback_mode.number == 4:
-                return True
-            else:
-                return False
-        except AttributeError:
-            return False
+        # 3 = random, 4/5/6 = shuffle tracks/albums/folders
+        return self._playback_mode() in (3, 4, 5, 6)
 
     def set_shuffle(self, val: bool):
-        if self.beefweb.state.playback_mode.number == 4:
-            self.beefweb.client.set_player_state(playback_mode=0)
-        else:
+        mode = self._playback_mode()
+        if val and mode not in (3, 4, 5, 6):
             self.beefweb.client.set_player_state(playback_mode=4)
+        elif not val and mode in (3, 4, 5, 6):
+            self.beefweb.client.set_player_state(playback_mode=0)
 
     def get_art_url(self, track: int) -> str:
         self.beefweb.download_art()
         return f'file://{GLib.get_user_cache_dir()}/beefweb_mpris/{self.beefweb.active_item.columns.album}'
 
     def get_volume(self) -> VolumeDecimal:
+        # MPRIS volume is 0.0-1.0; foobar2000 reports dB (-100.0 to 0.0).
+        # Inverse of set_volume's curve, so scroll steps round-trip.
         try:
-            print("returning volume: ", self.beefweb.state.volume.value)
-            return self.beefweb.state.volume.value + 100.0
+            db = float(self.beefweb.state.volume.value)
         except AttributeError:
-            return 100
+            return 1.0
+        if db >= -1.0:
+            return 1.0
+        if db <= -100.0:
+            return 0.0
+        return 1.0 - log(-db) / log(100)
 
     def set_volume(self, val: VolumeDecimal):
-        # I don't know what im doing but it works kinda
+        val = min(max(float(val), 0.0), 1.0)
         new_vol = 0 - (100 ** (1 - val))
-        print(new_vol)
         return self.beefweb.client.set_player_state(volume=new_vol)
 
     def is_mute(self) -> bool:
